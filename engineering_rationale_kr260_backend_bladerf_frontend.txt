@@ -1,0 +1,37 @@
+================================================================================
+ENGINEERING RATIONALE: KRIA KR260 (BACKEND) + BLADERF 2.0 MICRO (FRONTEND)
+================================================================================
+
+1. ARCHITECTURAL FIT & HETEROGENEOUS WORKLOAD DISTRIBUTION
+   - Functional Decoupling: Separates physical-layer RF conversion from heavy digital signal processing (DSP).
+   - Frontend Delegation (bladeRF): Dedicated to RF agile tuning (47 MHz to 6 GHz), pre-filtering, and hardware I/Q sample capture via Analog Devices AD9361/AD9363 and Intel Cyclone V FPGA.
+   - Backend Processing (Kria KR260 / Zynq UltraScale+ MPSoC):
+     * Programmable Logic (PL): Accelerates hard real-time algorithms (Polyphase Filter Banks, FFT channelization, matrix decomposition, correlation, machine learning inference) using UltraScale+ DSP48E2 slices.
+     * Processing System (PS): Quad-core ARM Cortex-A53 manages control-plane software, scheduling, and protocol framing.
+     * Dual ARM Cortex-R5F cores handle hard real-time timing, TDD switching, or fast frequency-hopping synchronization.
+
+2. BALANCED INTERFACE THROUGHPUT & BOTTLENECK MITIGATION
+   - Ingress Bandwidth Headroom (bladeRF -> KR260 via USB 3.0):
+     * Maximum bladeRF streaming rate: 61.44 MSPS (16-bit complex I/Q).
+     * Physical throughput: 61.44 MSPS * 4 bytes/sample ~= 245.76 MB/s (~1.97 Gbps).
+     * The KR260 native USB 3.0 controller provides ~3.2 Gbps effective sustained throughput, leaving sufficient interface margin without buffer starvation.
+   - High-Speed Egress Offload (KR260 -> Network/Cluster via 10GbE SFP+):
+     * Solves the typical downstream networking bottleneck of embedded SDR nodes.
+     * The KR260 can filter, decimate, or extract features in the FPGA and stream high-rate data or raw spectra out over 10GbE (UDP, VITA 49, or RoCE) directly to a datacenter, cluster, or recorder with zero dropouts.
+
+3. SUPERIOR SWaP-C (SIZE, WEIGHT, POWER, AND COST)
+   - Cost Advantage:
+     * High-end SDRs with native 10GbE SFP+ ports (e.g., USRP X310/N310) range from $7,000 to $12,000+.
+     * The bladeRF 2.0 micro ($480 - $800) + Kria KR260 (~$350) totals under $1,200, achieving comparable computational offload capability at roughly 10-15% of the capital expenditure.
+   - Power & Thermal Profile:
+     * Combined platform power consumption typically sits between 15W and 25W under load.
+     * Highly suitable for remote masts, field deployments, compact enclosures, and vehicular platforms where high-draw x86 GPU workstations cannot operate.
+
+4. FULL EDGE AUTONOMY VS. HOST DEPENDENCY
+   - Self-Contained Edge Computer: Eliminates the requirement for an external x86 PC running host software. The KR260 boots embedded Linux (Ubuntu Server / PetaLinux) from microSD or eMMC.
+   - Native Driver Stack: Supports native embedded execution of `libbladeRF`, IIO, UHD wrappers, and GNU Radio runtimes.
+   - Deterministic Hardware Execution: Time-sensitive tasks and triggering can be managed at the hardware logic layer on the KR260 rather than being subject to non-deterministic desktop operating system latency.
+
+5. SUMMARY STATEMENT FOR STAKEHOLDERS
+   "Pairing the bladeRF 2.0 micro with the Kria KR260 delivers an optimal balance between RF versatility and deterministic computing power. The bladeRF provides reliable, wideband RF reception within the comfortable operational limits of USB 3.0, while the KR260 leverages UltraScale+ FPGA logic for intensive digital signal processing and a native 10GbE SFP+ interface for network offload. This architecture delivers enterprise-tier SDR performance, autonomous edge capability, and low power consumption at a fraction of the cost of dedicated rack-mount platforms."
+================================================================================

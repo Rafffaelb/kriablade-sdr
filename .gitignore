@@ -1,0 +1,12 @@
+# I/Q captures and generated plots
+*.sc16q11
+*.png
+!examples/*.png
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Article/publication planning notes (not part of the engineering repo)
+gemini-code-1790020400786.txt

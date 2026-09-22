@@ -1,0 +1,10 @@
+# Nuand bladeRF 2.0 micro - allow access without root
+#
+# Install:
+#   sudo cp 88-nuand-bladerf.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules
+#   sudo udevadm trigger
+#
+# Your user must be in the "plugdev" group (check with `groups`).
+
+SUBSYSTEM=="usb", ATTR{idVendor}=="2cf0", ATTR{idProduct}=="5250", MODE="0666", GROUP="plugdev"
